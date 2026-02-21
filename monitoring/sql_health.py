@@ -5,21 +5,13 @@ from .model import HealthReport
 
 class SQLHealthChecker(BaseHealthChecker):
 
-    # ---------------------------------------
-    # LIGHT CHECK (Latency Only)
-    # ---------------------------------------
     def run_light(self):
         start = time.time()
         self.connector.run("SELECT 1")
         latency = (time.time() - start) * 1000
 
-        database_name = (
-            self.connector.config.get("database")
-            or self.connector.connection.url.database
-        )
-
         return HealthReport(
-            database=database_name,
+            database=self.connector.engine.url.database,
             type="light",
             status="healthy",
             metrics={
@@ -27,22 +19,11 @@ class SQLHealthChecker(BaseHealthChecker):
             }
         )
 
-    # ---------------------------------------
-    # DEEP CHECK (Schema + Stats)
-    # ---------------------------------------
     def run_deep(self):
 
-        dialect = self.connector.connection.dialect.name
+        dialect = self.connector.engine.dialect.name
         table_reports = {}
 
-        database_name = (
-            self.connector.config.get("database")
-            or self.connector.connection.url.database
-        )
-
-        # =====================================================
-        # SQLITE
-        # =====================================================
         if dialect == "sqlite":
 
             tables = self.connector.run(
@@ -123,9 +104,6 @@ class SQLHealthChecker(BaseHealthChecker):
                     "columns": column_stats
                 }
 
-        # =====================================================
-        # POSTGRESQL
-        # =====================================================
         elif dialect == "postgresql":
 
             tables = self.connector.run("""
@@ -194,9 +172,6 @@ class SQLHealthChecker(BaseHealthChecker):
                     "columns": column_stats
                 }
 
-        # =====================================================
-        # FALLBACK (e.g., MySQL)
-        # =====================================================
         else:
 
             tables = self.connector.run("""
@@ -216,7 +191,7 @@ class SQLHealthChecker(BaseHealthChecker):
                 }
 
         return HealthReport(
-            database=database_name,
+            database=self.connector.engine.url.database,
             type="deep",
             status="healthy",
             metrics={"tables": table_reports}
