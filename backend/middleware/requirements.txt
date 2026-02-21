@@ -1,0 +1,5 @@
+SQLAlchemy
+pymongo
+snowflake-connector-python
+pyodbc
+psycopg2
