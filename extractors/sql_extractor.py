@@ -1,5 +1,5 @@
 from sqlalchemy import inspect
-from scheme_extraction import BaseSchemaExtractor
+from .scheme_extraction import BaseSchemaExtractor
 #  from model import ColumnSchema, TableSchema, DatabaseSchema
 
 class SQLSchemaExtractor(BaseSchemaExtractor):

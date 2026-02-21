@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from model import DatabaseSchema
+from .model import DatabaseSchema
 
 class BaseSchemaExtractor(ABC):
 
