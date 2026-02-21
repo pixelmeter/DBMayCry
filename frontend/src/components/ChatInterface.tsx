@@ -10,10 +10,12 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    if (messagesRef.current) {
+      messagesRef.current.scrollTop = messagesRef.current.scrollHeight
+    }
   }, [messages])
 
   const sendMessage = async () => {
@@ -36,16 +38,16 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col w-full h-full p-3">
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+      <div ref={messagesRef} className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4 bg-white hyphens-auto roundedn-2xl" lang="en">
         {messages.length === 0 && (
           <p className="text-center text-gray-400 mt-20">Ask anything about your database</p>
         )}
         {messages.map(msg => (
-          <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm whitespace-pre-wrap
+          <div key={msg.id} className={`flex whitespace-pre-wrap ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm 
               ${msg.role === "user"
                 ? "bg-blue-500 text-white rounded-br-sm"
                 : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
@@ -61,11 +63,10 @@ export default function ChatInterface() {
             </div>
           </div>
         )}
-        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-200 bg-white px-4 py-3 flex gap-2 items-end">
+      <div className="border-t border-gray-200 bg-white px-4 py-3 flex gap-2 items-end rounded-b-2xl">
         <textarea
           className="flex-1 resize-none bg-gray-100 rounded-xl px-4 py-2 text-sm outline-none max-h-40"
           rows={1}
