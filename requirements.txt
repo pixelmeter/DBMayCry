@@ -1,0 +1,4 @@
+SQLAlchemy
+pymongo
+snowflake-connector-python
+pyodbc
