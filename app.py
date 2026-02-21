@@ -4,7 +4,6 @@ from monitoring.sql_health import SQLHealthChecker
 from monitoring.scheduler import HealthMonitor
 from monitoring.storage import FileHealthStorage
 
-
 def main():
     # Change this to your actual file
     DB_PATH = "bike_store.db"
