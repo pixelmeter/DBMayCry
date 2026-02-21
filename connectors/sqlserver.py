@@ -1,4 +1,4 @@
-from sqlalchemy_base import SQLConnector
+from .sqlalchemy_base import SQLConnector
 import urllib
 
 class SQLServerConnector(SQLConnector):

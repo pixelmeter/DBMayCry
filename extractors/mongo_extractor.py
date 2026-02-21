@@ -1,5 +1,5 @@
-from scheme_extraction import BaseSchemaExtractor
-from model import ColumnSchema, TableSchema, DatabaseSchema
+from .scheme_extraction import BaseSchemaExtractor
+from .model import ColumnSchema, TableSchema, DatabaseSchema
 
 class MongoSchemaExtractor(BaseSchemaExtractor):
 

@@ -1,4 +1,4 @@
-from sqlalchemy_base import SQLConnector
+from .sqlalchemy_base import SQLConnector
 
 class SQLiteConnector(SQLConnector):
 

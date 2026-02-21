@@ -1,8 +1,8 @@
-from postgres import PostGresConnector
-from mongo import MongoConnector
-from sqlite import SQLiteConnector
-from mysql import MySQLConnector
-from sqlserver import SQLServerConnector
+from connectors.postgres_db import PostGresConnector
+from .mongo import MongoConnector
+from .sqlite import SQLiteConnector
+from .mysql import MySQLConnector
+from .sqlserver import SQLServerConnector
 
 
 class ConnectionFactory:

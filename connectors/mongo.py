@@ -1,4 +1,4 @@
-from connect import BaseConnector
+from .connect import BaseConnector
 from pymongo import MongoClient
 import json
 

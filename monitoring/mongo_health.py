@@ -1,5 +1,5 @@
 import time
-from health_checker import BaseHealthChecker
+from .health_checker import BaseHealthChecker
 
 class MongoHealthChecker(BaseHealthChecker):
     def run(self):

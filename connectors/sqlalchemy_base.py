@@ -1,4 +1,4 @@
-from connect import BaseConnector
+from .connect import BaseConnector
 from sqlalchemy import create_engine, text
 
 class SQLConnector(BaseConnector):
@@ -6,13 +6,13 @@ class SQLConnector(BaseConnector):
         if self.config.get("uri"):
             uri = self.config['uri']
         else:
-            uri = self._build_uri
+            uri = self._build_uri()
         self.connection = create_engine(uri)
 
     def run(self, query, **kwargs):
         with self.connection.connect() as conn:
             result = conn.execute(text(query), kwargs)
-            return result.fetchall
+            return result.fetchall()
 
     def test_connection(self):
         try:
