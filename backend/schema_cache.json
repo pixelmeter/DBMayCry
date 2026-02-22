@@ -1,0 +1,391 @@
+{
+  "database": "uploads/bike_store.db",
+  "tables": {
+    "brands": {
+      "columns": [
+        {
+          "name": "brand_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "brand_name",
+          "type": "TEXT"
+        }
+      ],
+      "primary_key": [
+        "brand_id"
+      ],
+      "foreign_keys": []
+    },
+    "categories": {
+      "columns": [
+        {
+          "name": "category_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "category_name",
+          "type": "TEXT"
+        }
+      ],
+      "primary_key": [
+        "category_id"
+      ],
+      "foreign_keys": []
+    },
+    "customers": {
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "first_name",
+          "type": "TEXT"
+        },
+        {
+          "name": "last_name",
+          "type": "TEXT"
+        },
+        {
+          "name": "phone",
+          "type": "TEXT"
+        },
+        {
+          "name": "email",
+          "type": "TEXT"
+        },
+        {
+          "name": "street",
+          "type": "TEXT"
+        },
+        {
+          "name": "city",
+          "type": "TEXT"
+        },
+        {
+          "name": "state",
+          "type": "TEXT"
+        },
+        {
+          "name": "zip_code",
+          "type": "TEXT"
+        }
+      ],
+      "primary_key": [
+        "customer_id"
+      ],
+      "foreign_keys": []
+    },
+    "order_items": {
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "item_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "product_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "quantity",
+          "type": "INTEGER"
+        },
+        {
+          "name": "list_price",
+          "type": "REAL"
+        },
+        {
+          "name": "discount",
+          "type": "REAL"
+        }
+      ],
+      "primary_key": [
+        "order_id",
+        "item_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": [
+            "order_id"
+          ],
+          "referred_table": "orders",
+          "referred_columns": [
+            "order_id"
+          ]
+        },
+        {
+          "column": [
+            "product_id"
+          ],
+          "referred_table": "products",
+          "referred_columns": [
+            "product_id"
+          ]
+        }
+      ]
+    },
+    "orders": {
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "customer_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "order_status",
+          "type": "INTEGER"
+        },
+        {
+          "name": "order_date",
+          "type": "TEXT"
+        },
+        {
+          "name": "required_date",
+          "type": "TEXT"
+        },
+        {
+          "name": "shipped_date",
+          "type": "TEXT"
+        },
+        {
+          "name": "store_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "staff_id",
+          "type": "INTEGER"
+        }
+      ],
+      "primary_key": [
+        "order_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": [
+            "customer_id"
+          ],
+          "referred_table": "customers",
+          "referred_columns": [
+            "customer_id"
+          ]
+        },
+        {
+          "column": [
+            "store_id"
+          ],
+          "referred_table": "stores",
+          "referred_columns": [
+            "store_id"
+          ]
+        },
+        {
+          "column": [
+            "staff_id"
+          ],
+          "referred_table": "staffs",
+          "referred_columns": [
+            "staff_id"
+          ]
+        }
+      ]
+    },
+    "products": {
+      "columns": [
+        {
+          "name": "product_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "product_name",
+          "type": "TEXT"
+        },
+        {
+          "name": "brand_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "category_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "model_year",
+          "type": "INTEGER"
+        },
+        {
+          "name": "list_price",
+          "type": "REAL"
+        }
+      ],
+      "primary_key": [
+        "product_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": [
+            "brand_id"
+          ],
+          "referred_table": "brands",
+          "referred_columns": [
+            "brand_id"
+          ]
+        },
+        {
+          "column": [
+            "category_id"
+          ],
+          "referred_table": "categories",
+          "referred_columns": [
+            "category_id"
+          ]
+        }
+      ]
+    },
+    "staffs": {
+      "columns": [
+        {
+          "name": "staff_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "first_name",
+          "type": "TEXT"
+        },
+        {
+          "name": "last_name",
+          "type": "TEXT"
+        },
+        {
+          "name": "email",
+          "type": "TEXT"
+        },
+        {
+          "name": "phone",
+          "type": "TEXT"
+        },
+        {
+          "name": "active",
+          "type": "INTEGER"
+        },
+        {
+          "name": "store_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "manager_id",
+          "type": "INTEGER"
+        }
+      ],
+      "primary_key": [
+        "staff_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": [
+            "store_id"
+          ],
+          "referred_table": "stores",
+          "referred_columns": [
+            "store_id"
+          ]
+        },
+        {
+          "column": [
+            "manager_id"
+          ],
+          "referred_table": "staffs",
+          "referred_columns": [
+            "staff_id"
+          ]
+        }
+      ]
+    },
+    "stocks": {
+      "columns": [
+        {
+          "name": "store_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "product_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "quantity",
+          "type": "INTEGER"
+        }
+      ],
+      "primary_key": [
+        "store_id",
+        "product_id"
+      ],
+      "foreign_keys": [
+        {
+          "column": [
+            "store_id"
+          ],
+          "referred_table": "stores",
+          "referred_columns": [
+            "store_id"
+          ]
+        },
+        {
+          "column": [
+            "product_id"
+          ],
+          "referred_table": "products",
+          "referred_columns": [
+            "product_id"
+          ]
+        }
+      ]
+    },
+    "stores": {
+      "columns": [
+        {
+          "name": "store_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "store_name",
+          "type": "TEXT"
+        },
+        {
+          "name": "phone",
+          "type": "TEXT"
+        },
+        {
+          "name": "email",
+          "type": "TEXT"
+        },
+        {
+          "name": "street",
+          "type": "TEXT"
+        },
+        {
+          "name": "city",
+          "type": "TEXT"
+        },
+        {
+          "name": "state",
+          "type": "TEXT"
+        },
+        {
+          "name": "zip_code",
+          "type": "TEXT"
+        }
+      ],
+      "primary_key": [
+        "store_id"
+      ],
+      "foreign_keys": []
+    }
+  }
+}

@@ -1,7 +1,0 @@
-## Connectors
-
-## Middleware
-
-## UI
-
-## LLM

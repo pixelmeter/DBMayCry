@@ -5,115 +5,148 @@ function Login() {
 
   const navigate = useNavigate()
 
-  const [loginMode, setLoginMode] = useState("URI")
-  const [initDB, setInitDB] = useState("init")
+  const [loginMode, setLoginMode] = useState<"URI" | "SQLITE_FILE">("URI")
+  const [initDB, setInitDB] = useState<"init" | "loading" | "loaded">("init")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const switchLoginMode = () => {
-    setLoginMode(prev => prev === "URI" ? "Fields" : "URI")
-    console.log(loginMode)
+    setLoginMode(prev => prev === "URI" ? "SQLITE_FILE" : "URI")
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0])
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
     setInitDB("loading")
-    await new Promise(resolve => setTimeout(resolve, 5000))
-    setInitDB("loaded")
-    navigate('/landing')
+
+    try {
+      if (loginMode === "URI") {
+
+        const uriInput = (e.target as HTMLFormElement)
+          .querySelector<HTMLInputElement>("input[name='uri']")
+
+        const uri = uriInput?.value
+
+        await fetch("http://127.0.0.1:8000/api/connect/uri", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ uri })
+        })
+
+      } else {
+
+        if (!selectedFile) {
+          alert("Please select a SQLite file.")
+          setInitDB("init")
+          return
+        }
+
+        const formData = new FormData()
+        formData.append("file", selectedFile)
+
+        await fetch("http://127.0.0.1:8000/api/connect/sqlite", {
+          method: "POST",
+          body: formData
+        })
+      }
+
+      setInitDB("loaded")
+      navigate("/landing")
+
+    } catch (err) {
+      console.error(err)
+      setInitDB("init")
+    }
   }
 
   return (
-    <>
-      <div className="h-screen w-full flex justify-center items-center relative overflow-hidden">
+    <div className="h-screen w-full flex justify-center items-center relative overflow-hidden">
 
-        <div className="absolute -inset-12.5 -z-10 blur-[35px]">
-          <img src="/fuchsia-bg.svg" className="w-full h-full object-cover" />
-        </div>
-        
-        {/* Main Content */}
-        <div className="w-4/7 flex p-6 gap-2 bg-white/30 text-black rounded-bl-4xl rounded-tr-4xl justify-between items-center backdrop-blur-2xl shadow-xl">
+      <div className="absolute -inset-12.5 -z-10 blur-[35px]">
+        <img src="/fuchsia-bg.svg" className="w-full h-full object-cover" />
+      </div>
+
+      <div className="w-4/7 flex p-6 gap-2 bg-white/30 text-black rounded-bl-4xl rounded-tr-4xl justify-between items-center backdrop-blur-2xl shadow-xl">
+
         {initDB === "init" ? (
           <>
-          <div className="flex w-full p-5 text-2xl justify-center">
-          <p className="w-4/5 font-bold">
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Incidunt labore modi molestias. Odio eos sapiente, sit porro dolores recusandae 
-          </p>
-          </div>
-          <div className={`flex flex-col w-2/3 py-18 px-5 bg-purple-800/40 rounded-4xl items-center gap-5 shadow-md transition-all`}>
-          <div className="text-xl font-semibold"> Welcome to DBMayCry! </div>
-          {/* URI Form */}
-          <form
-          className={`flex flex-col gap-3 w-[85%] overflow-hidden transition-all duration-500 ${loginMode === "URI" ? "max-h-125 opacity-100" : "max-h-0 opacity-0"}`}
-          onSubmit={handleSubmit}
-          >
-          <div className="w-full">
-          <p className="px-2 py-1">Database URI:</p>
-          <input placeholder="dialect://user:passwd@host:port/dbname" className="bg-gray-50 w-full rounded p-2 text-sm"/>
+            <div className="flex w-full p-5 text-2xl justify-center">
+              <p className="w-4/5 font-bold">
+                Connect using a database URI or upload a SQLite file.
+              </p>
             </div>
-          <div className="w-full">
-          <p className="px-2 py-1">Database Type:</p>
-          <select className="bg-gray-50 w-full rounded p-2 text-sm">
-          <option value="option1">PostgresSQL</option>
-          <option value="option1">SQLlite</option>
-          <option value="option1">MySQL</option>
-          </select>
-          </div>
-          <button className="px-8 py-2 rounded-full bg-purple-900 text-white  w-fit font-semibold self-center">Submit</button>
-          </form>
-          {/* Credentials Form */}
-          <form
-          className={`flex flex-col gap-3 w-[85%] overflow-hidden transition-all duration-500 ${loginMode === "Fields" ? "max-h-125 opacity-100" : "max-h-0 opacity-0"}`}
-          onSubmit={handleSubmit}
-          >
-          <div className="flex gap-2">
-          <div className="w-full">
-          <p className="px-2 py-1">Host IP:</p>
-          <input placeholder="Host" className="bg-gray-50 w-full rounded p-2"/>
-          </div>
-          <div className="w-1/4">
-          <p className="px-2 py-1">Port:</p>
-          <input placeholder="Port"  defaultValue={5432} className="bg-gray-50 w-full rounded p-2"/>
-          </div>
-          </div>
-          <div className="w-full">
-          <p className="px-2 py-1">Database Name:</p>
-          <input placeholder="db_name" className="bg-gray-50 w-full rounded p-2"/>
-          </div>
-          <div className="flex gap-2">
-          <div className="w-full">
-          <p className="px-2 py-1">Username:</p>
-          <input placeholder="user" className="bg-gray-50 w-full rounded p-2"/>
-          </div>
-          <div className="w-full">
-          <p className="px-2 py-1">Password:</p>
-          <input placeholder="passwd" type="password" className="bg-gray-50 w-full rounded p-2"/>
-          </div>
-          </div>
-          <div className="w-full">
-          <p className="px-2 py-1">Database Type:</p>
-          <select className="bg-gray-50 w-full rounded p-2 text-sm">
-          <option value="option1">PostgresSQL</option>
-          <option value="option1">SQLlite</option>
-          <option value="option1">MySQL</option>
-          </select>
-          </div>
-          <button className="px-8 py-2 rounded-full bg-purple-900 text-white  w-fit font-semibold self-center">Submit</button>
-          </form>
 
-          <p>Or</p>
+            <div className="flex flex-col w-2/3 py-18 px-5 bg-purple-800/40 rounded-4xl items-center gap-5 shadow-md">
 
-          <button onClick={switchLoginMode} className="p-2 px-3 rounded underline"> 
-          Login With {loginMode === "URI" ? "Database Credentials" : "Database URI"}
-          </button>
+              <div className="text-xl font-semibold">
+                Welcome to DBMayCry
+              </div>
 
-          </div>
+              {/* URI FORM */}
+              <form
+                className={`flex flex-col gap-3 w-[85%] transition-all duration-500 ${loginMode === "URI" ? "opacity-100" : "hidden"}`}
+                onSubmit={handleSubmit}
+              >
+                <div>
+                  <p className="px-2 py-1">Database URI</p>
+                  <input
+                    name="uri"
+                    placeholder="dialect://user:pass@host:port/db"
+                    className="bg-gray-50 w-full rounded p-2 text-sm"
+                  />
+                </div>
+
+                <button className="px-8 py-2 rounded-full bg-purple-900 text-white font-semibold self-center">
+                  Connect
+                </button>
+              </form>
+
+              {/* SQLITE FILE FORM */}
+              <form
+                className={`flex flex-col gap-3 w-[85%] transition-all duration-500 ${loginMode === "SQLITE_FILE" ? "opacity-100" : "hidden"}`}
+                onSubmit={handleSubmit}
+              >
+                <div>
+                  <p className="px-2 py-1">Upload SQLite File</p>
+                  <input
+                    type="file"
+                    accept=".db,.sqlite"
+                    onChange={handleFileChange}
+                    className="bg-gray-50 w-full rounded p-2"
+                  />
+                </div>
+
+                <button className="px-8 py-2 rounded-full bg-purple-900 text-white font-semibold self-center">
+                  Upload & Connect
+                </button>
+              </form>
+
+              <button
+                onClick={switchLoginMode}
+                className="p-2 px-3 rounded underline"
+              >
+                {loginMode === "URI"
+                  ? "Use SQLite File Instead"
+                  : "Use Database URI Instead"}
+              </button>
+
+            </div>
           </>
         ) : (
-          <p>Loading</p>
+          <p className="text-xl font-semibold">
+            Initializing Database...
+          </p>
         )}
 
-        </div>
       </div>
-    </>
+    </div>
   )
 }
 

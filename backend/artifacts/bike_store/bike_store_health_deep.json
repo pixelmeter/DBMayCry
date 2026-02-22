@@ -1,0 +1,186 @@
+{
+    "database": "bike_store.db",
+    "type": "deep",
+    "status": "healthy",
+    "metrics": {
+        "tables": {
+            "brands": {
+                "row_count": 9,
+                "columns": {
+                    "brand_name": {
+                        "null_pct": 0.0
+                    }
+                }
+            },
+            "categories": {
+                "row_count": 7,
+                "columns": {
+                    "category_name": {
+                        "null_pct": 0.0
+                    }
+                }
+            },
+            "products": {
+                "row_count": 321,
+                "columns": {
+                    "product_name": {
+                        "null_pct": 0.0
+                    },
+                    "model_year": {
+                        "null_pct": 0.0,
+                        "mean": 2017.5919003115264,
+                        "stddev": 0.6640265655693561,
+                        "min": 2016,
+                        "max": 2019
+                    },
+                    "list_price": {
+                        "null_pct": 0.0,
+                        "mean": 1520.5914018691587,
+                        "stddev": 1609.639665205642,
+                        "min": 89.99,
+                        "max": 11999.99
+                    }
+                }
+            },
+            "stores": {
+                "row_count": 3,
+                "columns": {
+                    "store_name": {
+                        "null_pct": 0.0
+                    },
+                    "phone": {
+                        "null_pct": 0.0
+                    },
+                    "email": {
+                        "null_pct": 0.0
+                    },
+                    "street": {
+                        "null_pct": 0.0
+                    },
+                    "city": {
+                        "null_pct": 0.0
+                    },
+                    "state": {
+                        "null_pct": 0.0
+                    },
+                    "zip_code": {
+                        "null_pct": 0.0
+                    }
+                }
+            },
+            "staffs": {
+                "row_count": 10,
+                "columns": {
+                    "first_name": {
+                        "null_pct": 0.0
+                    },
+                    "last_name": {
+                        "null_pct": 0.0
+                    },
+                    "email": {
+                        "null_pct": 0.0
+                    },
+                    "phone": {
+                        "null_pct": 0.0
+                    },
+                    "active": {
+                        "null_pct": 0.0,
+                        "mean": 1.0,
+                        "stddev": 0.0,
+                        "min": 1,
+                        "max": 1
+                    }
+                }
+            },
+            "customers": {
+                "row_count": 1445,
+                "columns": {
+                    "first_name": {
+                        "null_pct": 0.0
+                    },
+                    "last_name": {
+                        "null_pct": 0.0
+                    },
+                    "phone": {
+                        "null_pct": 0.8768
+                    },
+                    "email": {
+                        "null_pct": 0.0
+                    },
+                    "street": {
+                        "null_pct": 0.0
+                    },
+                    "city": {
+                        "null_pct": 0.0
+                    },
+                    "state": {
+                        "null_pct": 0.0
+                    },
+                    "zip_code": {
+                        "null_pct": 0.0
+                    }
+                }
+            },
+            "orders": {
+                "row_count": 1615,
+                "columns": {
+                    "order_status": {
+                        "null_pct": 0.0,
+                        "mean": 3.778947368421053,
+                        "stddev": 0.6932153336286673,
+                        "min": 1,
+                        "max": 4
+                    },
+                    "order_date": {
+                        "null_pct": 0.0
+                    },
+                    "required_date": {
+                        "null_pct": 0.0
+                    },
+                    "shipped_date": {
+                        "null_pct": 0.1053
+                    }
+                }
+            },
+            "order_items": {
+                "row_count": 4722,
+                "columns": {
+                    "quantity": {
+                        "null_pct": 0.0,
+                        "mean": 1.4989411266412538,
+                        "stddev": 0.49999887878595306,
+                        "min": 1,
+                        "max": 2
+                    },
+                    "list_price": {
+                        "null_pct": 0.0,
+                        "mean": 1212.707871664549,
+                        "stddev": 1352.6550054950724,
+                        "min": 89.99,
+                        "max": 11999.99
+                    },
+                    "discount": {
+                        "null_pct": 0.0,
+                        "mean": 0.1053727234222787,
+                        "stddev": 0.05811268976139249,
+                        "min": 0.05,
+                        "max": 0.2
+                    }
+                }
+            },
+            "stocks": {
+                "row_count": 939,
+                "columns": {
+                    "quantity": {
+                        "null_pct": 0.0,
+                        "mean": 14.388711395101172,
+                        "stddev": 8.82736573839747,
+                        "min": 0,
+                        "max": 30
+                    }
+                }
+            }
+        }
+    },
+    "timestamp": "2026-02-21T22:15:19.645736"
+}
