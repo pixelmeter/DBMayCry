@@ -1,0 +1,9 @@
+{
+    "database": "bike_store.db",
+    "type": "light",
+    "status": "healthy",
+    "metrics": {
+        "latency_ms": 0.93
+    },
+    "timestamp": "2026-02-21T22:15:19.622686"
+}

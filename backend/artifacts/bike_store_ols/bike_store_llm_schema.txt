@@ -1,0 +1,85 @@
+TABLE brands
+  - brand_id (PK) INTEGER
+  - brand_name TEXT
+
+TABLE categories
+  - category_id (PK) INTEGER
+  - category_name TEXT
+
+TABLE customers
+  - customer_id (PK) INTEGER
+  - first_name TEXT
+  - last_name TEXT
+  - phone TEXT
+  - email TEXT
+  - street TEXT
+  - city TEXT
+  - state TEXT
+  - zip_code TEXT
+
+TABLE order_items
+  - order_id (PK) INTEGER
+  - item_id (PK) INTEGER
+  - product_id INTEGER
+  - quantity INTEGER
+  - list_price REAL
+  - discount REAL
+  RELATIONSHIPS
+    order_items.order_id → orders.order_id
+    order_items.product_id → products.product_id
+
+TABLE orders
+  - order_id (PK) INTEGER
+  - customer_id INTEGER
+  - order_status INTEGER
+  - order_date TEXT
+  - required_date TEXT
+  - shipped_date TEXT
+  - store_id INTEGER
+  - staff_id INTEGER
+  RELATIONSHIPS
+    orders.customer_id → customers.customer_id
+    orders.store_id → stores.store_id
+    orders.staff_id → staffs.staff_id
+
+TABLE products
+  - product_id (PK) INTEGER
+  - product_name TEXT
+  - brand_id INTEGER
+  - category_id INTEGER
+  - model_year INTEGER
+  - list_price REAL
+  RELATIONSHIPS
+    products.brand_id → brands.brand_id
+    products.category_id → categories.category_id
+
+TABLE staffs
+  - staff_id (PK) INTEGER
+  - first_name TEXT
+  - last_name TEXT
+  - email TEXT
+  - phone TEXT
+  - active INTEGER
+  - store_id INTEGER
+  - manager_id INTEGER
+  RELATIONSHIPS
+    staffs.store_id → stores.store_id
+    staffs.manager_id → staffs.staff_id
+
+TABLE stocks
+  - store_id (PK) INTEGER
+  - product_id (PK) INTEGER
+  - quantity INTEGER
+  RELATIONSHIPS
+    stocks.store_id → stores.store_id
+    stocks.product_id → products.product_id
+
+TABLE stores
+  - store_id (PK) INTEGER
+  - store_name TEXT
+  - phone TEXT
+  - email TEXT
+  - street TEXT
+  - city TEXT
+  - state TEXT
+  - zip_code TEXT
