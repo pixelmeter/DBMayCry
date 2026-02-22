@@ -3,3 +3,9 @@ pymongo
 snowflake-connector-python
 pyodbc
 psycopg2
+google-genai
+python-dotenv
+chromadb
+fastapi
+langchain_neo4j
+langchain_google_genai
