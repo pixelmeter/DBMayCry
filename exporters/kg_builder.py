@@ -1,5 +1,6 @@
 """
-Converts the schema dict into a deterministic Neo4j property graph using pure Cypher.
+Converts the schema dict produced by extractors/schema.py into a
+deterministic Neo4j property graph using pure Cypher.
 
 Node labels
 ───────────
@@ -15,20 +16,29 @@ Relationship types
   (:Column)    -[:IS_PK_OF]->    (:Table)
   (:Column)    -[:IS_FK_TO  { referred_column }]-> (:Table)
 
+Optionally, quality metrics from extractors/quality.py are stored as
+properties on (:Table) and (:Column) nodes.
+
 Usage
 ─────
     from exporters.kg_builder import KnowledgeGraphBuilder
 
-    with KnowledgeGraphBuilder(uri, user, password) as kg:
-        kg.build(schema)
+    builder = KnowledgeGraphBuilder(
+        neo4j_uri="bolt://localhost:7687",
+        neo4j_user="neo4j",
+        neo4j_password="yourpassword",
+    )
+    builder.build(schema, quality=quality_report)   # quality is optional
+    builder.close()
 """
 
 from __future__ import annotations
+from typing import Optional
 from neo4j import GraphDatabase
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Cypher templates
+# Cypher templates  (parameterised – never string-formatted with user data)
 # ─────────────────────────────────────────────────────────────────────────────
 
 _MERGE_DB = """
@@ -72,8 +82,7 @@ MERGE (c)-[:IS_PK_OF]->(t)
 _LINK_FK_TABLE = """
 MATCH (from_t:Table {fqn: $from_fqn})
 MATCH (to_t:Table   {fqn: $to_fqn})
-MERGE (from_t)-[r:RELATES_TO {via_column: $via_col}]->(to_t)
-SET r.referred_column = $ref_col
+MERGE (from_t)-[r:RELATES_TO {via_column: $via_col, referred_column: $ref_col}]->(to_t)
 """
 
 _LINK_FK_COLUMN = """
@@ -82,6 +91,31 @@ MATCH (ref_t:Table   {fqn: $ref_table_fqn})
 MERGE (fk_col)-[r:IS_FK_TO {referred_column: $ref_col}]->(ref_t)
 """
 
+# Quality patches
+_SET_TABLE_QUALITY = """
+MATCH (t:Table {fqn: $fqn})
+SET t.row_count = $row_count
+"""
+
+_SET_COLUMN_QUALITY = """
+MATCH (c:Column {fqn: $col_fqn})
+SET c.completeness = $completeness,
+    c.non_null      = $non_null
+"""
+
+_SET_COLUMN_STATS = """
+MATCH (c:Column {fqn: $col_fqn})
+SET c.stat_min    = $min,
+    c.stat_max    = $max,
+    c.stat_avg    = $avg,
+    c.stat_stddev = $stddev
+"""
+
+_SET_COLUMN_FRESHNESS = """
+MATCH (c:Column {fqn: $col_fqn})
+SET c.latest_value = $latest_value,
+    c.age_days      = $age_days
+"""
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Builder
@@ -92,16 +126,19 @@ class KnowledgeGraphBuilder:
     """
     Idempotent graph builder — safe to re-run after schema changes.
     All MERGE statements ensure no duplicates are created.
-    Stores schema structure and FK relationships only.
     """
 
     def __init__(self, neo4j_uri: str, neo4j_user: str, neo4j_password: str):
         self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
 
-    def build(self, schema: dict) -> None:
+    # ── public ────────────────────────────────────────────────────────────────
+
+    def build(self, schema: dict, quality: Optional[dict] = None) -> None:
         """
-        Builds the knowledge graph from schema dict.
-        schema – dict returned by connector.extract_schema()
+        Main entry point.
+
+        schema  – dict returned by extractors/schema.py
+        quality – dict returned by extractors/quality.py  (optional)
         """
         db_name = schema["database"]
 
@@ -112,7 +149,7 @@ class KnowledgeGraphBuilder:
             session.run(_MERGE_DB, db_name=db_name)
 
             for table_name, table in schema["tables"].items():
-                fqn = f"{db_name}.{table_name}"
+                fqn = f"{db_name}.{table_name}"  # fully-qualified name
                 pk_cols = table["primary_key"]
 
                 # 2. Table node
@@ -138,8 +175,11 @@ class KnowledgeGraphBuilder:
                         table_fqn=fqn,
                         is_pk=is_pk,
                     )
-                    session.run(_LINK_TABLE_COLUMN, table_fqn=fqn, col_fqn=col_fqn)
-
+                    session.run(
+                        _LINK_TABLE_COLUMN,
+                        table_fqn=fqn,
+                        col_fqn=col_fqn,
+                    )
                     if is_pk:
                         session.run(_LINK_PK, col_fqn=col_fqn, table_fqn=fqn)
 
@@ -149,7 +189,7 @@ class KnowledgeGraphBuilder:
                     via_col = ", ".join(fk["column"])
                     ref_col = ", ".join(fk["referred_columns"])
 
-                    # Table → Table edge (high-level graph traversal)
+                    # Table → Table edge (for high-level graph traversal)
                     session.run(
                         _LINK_FK_TABLE,
                         from_fqn=fqn,
@@ -158,7 +198,7 @@ class KnowledgeGraphBuilder:
                         ref_col=ref_col,
                     )
 
-                    # Column → Table edge (column-level lineage)
+                    # Column → Table edge (for column-level lineage)
                     for fk_col_name, ref_col_name in zip(
                         fk["column"], fk["referred_columns"]
                     ):
@@ -171,6 +211,11 @@ class KnowledgeGraphBuilder:
 
                 print(f"  [KG] ✓ {table_name}")
 
+            # 5. Attach quality data (optional)
+            if quality:
+                print("[KG] Attaching quality metrics…")
+                self._attach_quality(session, db_name, quality)
+
         print(f"[KG] Graph built → {db_name}")
 
     def close(self):
@@ -182,3 +227,38 @@ class KnowledgeGraphBuilder:
 
     def __exit__(self, *args):
         self.close()
+
+    # ── private ───────────────────────────────────────────────────────────────
+
+    def _attach_quality(self, session, db_name: str, quality: dict) -> None:
+        for table_name, tq in quality.items():
+            fqn = f"{db_name}.{table_name}"
+
+            # Set row count on table node
+            session.run(_SET_TABLE_QUALITY, fqn=fqn, row_count=tq["row_count"])
+
+            for col_name, col_metrics in tq["columns"].items():
+                col_fqn = f"{fqn}.{col_name}"
+
+                # null_pct → completeness (1 - null_pct)
+                null_pct = col_metrics.get("null_pct", 0.0)
+                completeness = round(1.0 - null_pct, 4)
+
+                session.run(
+                    _SET_COLUMN_QUALITY,
+                    col_fqn=col_fqn,
+                    completeness=completeness,
+                    non_null=None,  # health deep doesn't track non_null count
+                )
+
+                # Stats are inline per column in health deep (not separate "statistics" dict)
+                if "mean" in col_metrics:
+                    session.run(
+                        _SET_COLUMN_STATS,
+                        col_fqn=col_fqn,
+                        min=col_metrics.get("min"),
+                        max=col_metrics.get("max"),
+                        avg=col_metrics.get("mean"),   # health deep uses "mean" not "avg"
+                        stddev=col_metrics.get("stddev"),
+                    )
+

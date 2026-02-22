@@ -93,8 +93,11 @@ You are an expert Neo4j Cypher query writer for a database schema knowledge grap
 
 The graph has these node labels and properties:
   (:Database)  {{ name, updated_at }}
-  (:Table)     {{ fqn, name, database, pk }}
-  (:Column)    {{ fqn, name, type, table_fqn, is_pk }}
+  (:Table)     {{ fqn, name, database, pk, row_count }}
+  (:Column)    {{ fqn, name, type, table_fqn, is_pk,
+                  completeness, non_null,
+                  stat_min, stat_max, stat_avg, stat_stddev,
+                  latest_value, age_days }}
 
 Relationship types:
   (:Database)-[:HAS_TABLE]->(:Table)
@@ -108,9 +111,6 @@ Rules:
 - Return human-readable properties, not raw node objects.
 - Follow RELATES_TO edges for relationship questions.
 - Limit results to 50 unless asked for more.
-- RELATES_TO edges point FROM the FK table TO the referenced table.
-- For path traversal, always use undirected: (t1)-[:RELATES_TO*1..5]-(t2)
-- Never use directed -> for path traversal questions.
 
 Schema context:
 {schema}
@@ -137,7 +137,7 @@ Answer:
 def _get_neo4j_chain():
     """Initialized once, reused for every relational query."""
     llm = ChatGoogleGenerativeAI(
-        model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        model=os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
         temperature=0,
         google_api_key=os.getenv("GEMINI_API_KEY"),
     )
@@ -200,55 +200,12 @@ def _extract_tables_from_history(
 
 
 def get_global_context(db_name: str, artifacts_dir: str = "artifacts") -> str:
-    
-    path = Path(artifacts_dir) / db_name / f"{db_name}_global_context.txt"
-    
+    path = Path(artifacts_dir) / f"{db_name}_global_context.txt"
     if not path.exists():
         raise FileNotFoundError(
             f"Global context not found for '{db_name}'. Run ingest.py first."
         )
     return path.read_text()
-
-
-# def get_relational_context(
-#     question: str,
-#     db_name: str,
-#     history: list[dict] = None,
-#     known_tables: list[str] = None,
-# ) -> str:
-#     """
-#     Uses Neo4j GraphCypherQAChain for precise multi-hop FK traversal.
-#     Falls back to ChromaDB vector search if Neo4j is unavailable.
-#     """
-#     try:
-#         chain = _get_neo4j_chain()
-#         # Enrich with history context
-#         recent_tables = _extract_tables_from_history(history or [], known_tables or [])
-#         augmented = (
-#             f"{question} (context: tables {', '.join(recent_tables)})"
-#             if recent_tables else question
-#         )
-#         result = chain.invoke({"query": augmented})
-#         answer = result.get("result", "").strip()
-#         if answer:
-#             return answer
-#         # Empty result — fall through to ChromaDB
-#         raise ValueError("Empty Neo4j result")
-
-#     except Exception as e:
-#         print(f"  [Neo4j fallback] {e} — using ChromaDB")
-#         # Fallback to original ChromaDB vector search
-#         collection = _get_collection(db_name)
-#         recent_tables = _extract_tables_from_history(history or [], known_tables or [])
-#         enriched = (
-#             f"{question} related to tables: {', '.join(recent_tables)}"
-#             if recent_tables else question
-#         )
-#         results = collection.query(
-#             query_texts=[enriched],
-#             n_results=min(6, collection.count()),
-#         )
-#         return _format_results(results)
 
 def get_relational_context(
     question: str,
@@ -257,81 +214,38 @@ def get_relational_context(
     known_tables: list[str] = None,
 ) -> str:
     """
-    1. Try Neo4j Cypher traversal first
-    2. Always run ChromaDB semantic search in parallel
-    3. If Neo4j returns empty/null — merge both results and feed to LLM
-    4. If Neo4j has answer — enrich it with ChromaDB context anyway
+    Uses Neo4j GraphCypherQAChain for precise multi-hop FK traversal.
+    Falls back to ChromaDB vector search if Neo4j is unavailable.
     """
-    recent_tables = _extract_tables_from_history(history or [], known_tables or [])
-    client = _get_client()
-
-    # ── Step 1: Neo4j ────────────────────────────────────────────────────────
-    neo4j_answer = None
     try:
         chain = _get_neo4j_chain()
+        # Enrich with history context
+        recent_tables = _extract_tables_from_history(history or [], known_tables or [])
         augmented = (
             f"{question} (context: tables {', '.join(recent_tables)})"
             if recent_tables else question
         )
         result = chain.invoke({"query": augmented})
-        raw = result.get("result", "").strip()
-
-        # Check if Neo4j actually found something meaningful
-        null_signals = ["don't know", "no information", "i cannot", "not found", "no data", ""]
-        if raw and not any(s in raw.lower() for s in null_signals):
-            neo4j_answer = raw
-            print(f"  [Neo4j] ✓ got answer")
-        else:
-            print(f"  [Neo4j] ✗ empty/null result — falling back to hybrid")
+        answer = result.get("result", "").strip()
+        if answer:
+            return answer
+        # Empty result — fall through to ChromaDB
+        raise ValueError("Empty Neo4j result")
 
     except Exception as e:
-        print(f"  [Neo4j] ✗ failed: {e}")
-
-    # ── Step 2: ChromaDB semantic search (always runs) ───────────────────────
-    try:
+        print(f"  [Neo4j fallback] {e} — using ChromaDB")
+        # Fallback to original ChromaDB vector search
         collection = _get_collection(db_name)
+        recent_tables = _extract_tables_from_history(history or [], known_tables or [])
         enriched = (
             f"{question} related to tables: {', '.join(recent_tables)}"
             if recent_tables else question
         )
-        chroma_results = collection.query(
+        results = collection.query(
             query_texts=[enriched],
             n_results=min(6, collection.count()),
         )
-        chroma_context = _format_results(chroma_results)
-    except Exception as e:
-        print(f"  [ChromaDB] ✗ failed: {e}")
-        chroma_context = ""
-
-    # ── Step 3: If Neo4j answered — return it (optionally enriched) ──────────
-    if neo4j_answer:
-        return neo4j_answer
-
-    # ── Step 4: Neo4j was empty — merge both and re-ask LLM ─────────────────
-    print(f"  [Hybrid] Merging Neo4j null + ChromaDB context for LLM")
-
-    merged_prompt = f"""You are a database documentation assistant.
-Neo4j graph traversal returned no results for this question.
-Use the semantic search context below to answer as accurately as possible.
-
-Question: {question}
-
-Semantic Search Context:
-{chroma_context}
-
-Answer based on the context above. If still insufficient, say so honestly.
-Answer:"""
-
-    try:
-        response = client.models.generate_content(
-            model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
-            contents=merged_prompt,
-        )
-        return response.text.strip()
-    except Exception as e:
-        # Last resort — return raw ChromaDB context
-        print(f"  [Hybrid] LLM call failed: {e} — returning raw context")
-        return chroma_context
+        return _format_results(results)
 
 
 def get_specific_context(

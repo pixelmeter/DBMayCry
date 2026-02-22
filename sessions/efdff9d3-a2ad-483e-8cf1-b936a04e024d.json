@@ -1,0 +1,16 @@
+{
+  "session_id": "efdff9d3-a2ad-483e-8cf1-b936a04e024d",
+  "db_name": "bike_store",
+  "created_at": "2026-02-22T04:26:44.373322",
+  "last_active": "2026-02-22T04:27:27.353209",
+  "history": [
+    {
+      "role": "user",
+      "content": "what table does customer_id point to?"
+    },
+    {
+      "role": "assistant",
+      "content": "The `customer_id` column points to the `customers` table."
+    }
+  ]
+}
